@@ -6,75 +6,128 @@ import dotenv from "dotenv";
 dotenv.config();
 import cloudinary from "../config/cloudinary.js";
 import { registerSchema, loginSchema } from "../validators/auth.validation.js";
+import {getChannel} from "../config/rabbitmq.js";
 
-export const register = async (req, res) => {
-  try {
-    const { error, value } = registerSchema.validate(req.body);
 
-    if (error) {
 
-      return res.status(400).json({
-        message: error.details[0].message,
-      });
-    }
+export const register =
+  async (req, res) => {
 
-    const { name, email, password } = value;
+    try {
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "Email already exists" });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    let profileData = {};
-
-    if (req.file) {
-      const result = await cloudinary.uploader.upload_stream(
-        { folder: "auth-app" },
-        async (error, result) => {
-          if (error) throw error;
-
-          profileData = {
-            url: result.secure_url,
-            public_id: result.public_id
-          };
-
-          const user = await User.create({
-            name,
-            email,
-            password: hashedPassword,
-            profilePic: profileData
-          });
-
-          return res.json({
-            message: "User registered",
-            user
-          });
-        }
+      const {
+        error,
+        value
+      } = registerSchema.validate(
+        req.body
       );
 
-      result.end(req.file.buffer);
-    } else {
-      const user = await User.create({
+      if (error) {
+
+        return res.status(400).json({
+
+          message:
+            error.details[0].message,
+
+        });
+      }
+
+      const {
+
         name,
+
         email,
-        password: hashedPassword
+
+        password
+
+      } = value;
+
+      const existingUser =
+        await User.findOne({ email });
+
+      if (existingUser) {
+
+        return res.status(400).json({
+
+          message:
+            "Email already exists",
+
+        });
+      }
+
+      const hashedPassword =
+        await bcrypt.hash(
+
+          password,
+
+          10
+        );
+
+      const user =
+        await User.create({
+
+          name,
+
+          email,
+
+          password:
+            hashedPassword,
+
+        });
+
+      if (req.file) {
+
+        const channel =
+          getChannel();
+
+        channel.sendToQueue(
+
+          "profileQueue",
+
+          Buffer.from(
+
+            JSON.stringify({
+
+              userId:
+                user._id,
+
+              file:
+                req.file.buffer.toString(
+                  "base64"
+                ),
+
+            })
+          )
+        );
+
+        console.log(
+          "Image Sent To Queue"
+        );
+      }
+
+      return res.status(201).json({
+
+        success: true,
+
+        message:
+          "User Registered Successfully",
+
+        user,
+
       });
 
-      res.json({
-        message: "User registered without image",
-        user
+    } catch (err) {
+
+      console.log(err);
+
+      return res.status(500).json({
+
+        message:
+          err.message,
+
       });
     }
-
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
 };
-
-
-
 
 export const login = async (req, res) => {
   try {

@@ -9,6 +9,13 @@ import { redisClient } from "./config/redis.js";
 import cors from "cors";
 import http from "http";
 import { Server } from "socket.io";
+import { connectRabbitMQ } from "./config/rabbitmq.js";
+// import "./consumers/profile.consumer.js";
+import {
+  startProfileConsumer
+}
+from "./consumers/profile.consumer.js";
+
 
 dotenv.config();
 
@@ -82,6 +89,8 @@ app.use(cors({
 connectDB();
 
 redisClient;
+await connectRabbitMQ();
+startProfileConsumer();
 
 app.use(
   "/api/v1",
