@@ -20,12 +20,36 @@ app.use(cookieParser());
 
 //    "http://localhost:5173",
 
+// app.use(cors({
+
+//   origin:
+//   process.env.CLIENT_URL,
+//   credentials: true
+
+// }));
+
+
 app.use(cors({
+  origin: function (origin, callback) {
 
-  origin:
-  process.env.CLIENT_URL,
+    const allowedOrigins = [
+      "http://localhost:5173",
+      "https://real-time-incident-frontend.vercel.app/",
+     
+    ];
+
+    if (!origin) return callback(null, true);
+
+    const cleanOrigin = origin.replace(/\/$/, "");
+
+    if (allowedOrigins.includes(cleanOrigin)) {
+      callback(null, true);
+    } else {
+      console.log("❌ Blocked origin:", origin);
+      callback(null, false);
+    }
+  },
   credentials: true
-
 }));
 
 connectDB();
