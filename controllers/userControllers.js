@@ -236,29 +236,50 @@ export const login = async (req, res) => {
       }
     );
 
-    res.cookie(
-      "accessToken",
-      accessToken,
-      {
-        httpOnly: true,
-        secure: false,
-        sameSite: "lax",
-        maxAge:
-          15 * 60 * 1000,
-      }
-    );
+    // res.cookie(
+    //   "accessToken",
+    //   accessToken,
+    //   {
+    //     httpOnly: true,
+    //     secure: false,
+    //     sameSite: "lax",
+    //     maxAge:
+    //       15 * 60 * 1000,
+    //   }
+    // );
 
-    res.cookie(
-      "refreshToken",
-      refreshToken,
-      {
-        httpOnly: true,
-        secure: false,
-        sameSite: "lax",
-        maxAge:
-          60 * 60 * 1000,
-      }
-    );
+    // res.cookie(
+    //   "refreshToken",
+    //   refreshToken,
+    //   {
+    //     httpOnly: true,
+    //     secure: false,
+    //     sameSite: "lax",
+    //     maxAge:
+    //       60 * 60 * 1000,
+    //   }
+    // );
+
+
+      const isProd = true;
+
+        res.cookie("accessToken", accessToken, {
+            httpOnly: true,
+            secure: isProd,
+            maxAge: 15 * 60 * 1000,
+            sameSite: isProd ? "None" : "Lax",
+            path: "/",
+
+        });
+
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: isProd,
+            sameSite: isProd ? "None" : "Lax",
+            maxAge: 60 * 60 * 1000,
+            path: "/",
+        });
+
 
     res.json({
       message: "Login success",
